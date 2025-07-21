@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Moon, Sun, Code } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Moon, Sun, Code, User, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 
 /**
@@ -11,14 +11,37 @@ import { motion } from "framer-motion";
 const Navbar = ({ theme, toggleTheme }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const links = [
+  const publicLinks = [
     ["Home", "/"],
     ["About", "/about"],
     ["Projects", "/projects"],
     ["Services", "/services"],
     ["Contact", "/contact"],
+  ];
+
+  const userLinks = [
+    ["Home", "/"],
+    ["About", "/about"],
+    ["Projects", "/projects"],
+    ["Services", "/services"],
+    ["Contact", "/contact"],
+    ["Add Education", "/education"],
+    ["Add Project", "/project-form"],
+  ];
+
+  const adminLinks = [
+    ["Home", "/"],
+    ["About", "/about"],
+    ["Projects", "/projects"],
+    ["Services", "/services"],
+    ["Contact", "/contact"],
+    ["Add Education", "/education"],
+    ["Add Project", "/project-form"],
+    ["Dashboard", "/admin/dashboard"],
   ];
 
   useEffect(() => {
@@ -27,10 +50,37 @@ const Navbar = ({ theme, toggleTheme }) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+    
+    if (token && userData) {
+      setUser(JSON.parse(userData));
+    } else {
+      setUser(null);
+    }
+  }, [location]);
+
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/");
+  };
+
+  const getNavigationLinks = () => {
+    if (!user) return publicLinks;
+    if (user.role === "admin") return adminLinks;
+    return userLinks;
+  };
+
+  const links = getNavigationLinks();
 
   return (
     <header
@@ -54,7 +104,7 @@ const Navbar = ({ theme, toggleTheme }) => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6">
             {links.map(([name, path]) => (
               <Link
                 key={path}
@@ -68,8 +118,46 @@ const Navbar = ({ theme, toggleTheme }) => {
             ))}
           </nav>
 
-          {/* Theme Toggle + Mobile Menu Button */}
+          {/* Right Side Items */}
           <div className="flex items-center gap-4">
+            {/* User Info / Auth Buttons */}
+            {user ? (
+              <div className="hidden md:flex items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-400/10 to-violet-400/10 border border-indigo-400/20">
+                  <User className="w-4 h-4 text-indigo-400" />
+                  <span className="text-sm text-indigo-200">{user.name}</span>
+                  {user.role === "admin" && (
+                    <span className="text-xs bg-indigo-400/20 text-indigo-300 px-2 py-0.5 rounded-full">
+                      Admin
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-full hover:bg-red-400/10 text-red-400 transition-colors"
+                  title="Logout"
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  to="/signin"
+                  className="px-4 py-2 text-indigo-400 hover:text-white transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-400 to-violet-400 text-white rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+
+            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
@@ -86,6 +174,7 @@ const Navbar = ({ theme, toggleTheme }) => {
               )}
             </button>
 
+            {/* Mobile Menu Button */}
             <button
               className="p-2 md:hidden rounded-lg hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -110,7 +199,8 @@ const Navbar = ({ theme, toggleTheme }) => {
         }}
         className="md:hidden overflow-hidden"
       >
-        <nav className="container-custom py-4 bg-white dark:bg-dark-900">
+        <nav className="container-custom py-4 bg-white dark:bg-dark-900 border-t border-dark-200 dark:border-dark-700">
+          {/* Navigation Links */}
           {links.map(([name, path]) => (
             <Link
               key={path}
@@ -122,6 +212,48 @@ const Navbar = ({ theme, toggleTheme }) => {
               {name}
             </Link>
           ))}
+          
+          {/* Mobile User Section */}
+          <div className="mt-4 pt-4 border-t border-dark-200 dark:border-dark-700">
+            {user ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-indigo-400/10 to-violet-400/10 border border-indigo-400/20">
+                  <User className="w-5 h-5 text-indigo-400" />
+                  <div>
+                    <p className="text-indigo-200 font-medium">{user.name}</p>
+                    <p className="text-indigo-300 text-sm">{user.email}</p>
+                    {user.role === "admin" && (
+                      <span className="text-xs bg-indigo-400/20 text-indigo-300 px-2 py-0.5 rounded-full">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Link
+                  to="/signin"
+                  className="block w-full p-2 text-center text-indigo-400 hover:bg-indigo-400/10 rounded-lg transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="block w-full p-2 text-center bg-gradient-to-r from-indigo-400 to-violet-400 text-white rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
         </nav>
       </motion.div>
     </header>

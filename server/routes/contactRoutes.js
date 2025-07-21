@@ -1,13 +1,13 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getContacts,
   getContactById,
   createContact,
   updateContact,
   deleteContact,
   deleteAllContacts,
-} = require("../controllers/contactController");
-const { protect } = require("../middleware/auth");
+} from "../controllers/contactController.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -24,4 +24,4 @@ router
   .put(protect, updateContact)
   .delete(protect, deleteContact);
 
-module.exports = router;
+export default router;

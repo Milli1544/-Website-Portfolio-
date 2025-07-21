@@ -1,6 +1,7 @@
 {
   "name": "mern_skeleton",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "author": "Blessing",
   "license": "MIT",
@@ -18,7 +19,8 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && yarn build",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "cd client && yarn preview"
+    "preview": "cd client && yarn preview",
+    "create-admin": "node scripts/create-admin.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

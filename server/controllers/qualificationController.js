@@ -1,4 +1,4 @@
-const Qualification = require("../models/qualification");
+import Qualification from "../models/qualification.js";
 
 // Get all qualifications
 const getQualifications = async (req, res) => {
@@ -67,7 +67,10 @@ const updateQualification = async (req, res) => {
     const qualification = await Qualification.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true, runValidators: true }
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
     if (!qualification) {
@@ -133,7 +136,7 @@ const deleteAllQualifications = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getQualifications,
   getQualificationById,
   createQualification,

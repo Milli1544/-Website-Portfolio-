@@ -12,6 +12,30 @@ import About from "./pages/About.jsx";
 import Projects from "./pages/Projects.jsx";
 import Services from "./pages/Services.jsx";
 import Contact from "./pages/Contact.jsx";
+import SignIn from "./pages/Signin.jsx";
+import SignUp from "./pages/Signup.jsx";
+import EducationForm from "./pages/EducationForm.jsx";
+import ProjectForm from "./pages/ProjectForm.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+
+// Protected Route Component
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
+
+  if (!token || !user) {
+    return <SignIn />;
+  }
+
+  if (adminOnly) {
+    const parsedUser = JSON.parse(user);
+    if (parsedUser.role !== "admin") {
+      return <Home />;
+    }
+  }
+
+  return children;
+};
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +76,36 @@ function App() {
               <Route path="/projects" element={<Projects />} />
               <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+
+              {/* Protected Routes */}
+              <Route
+                path="/education"
+                element={
+                  <ProtectedRoute>
+                    <EducationForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/project-form"
+                element={
+                  <ProtectedRoute>
+                    <ProjectForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin Only Routes */}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Routes>
         </AnimatePresence>

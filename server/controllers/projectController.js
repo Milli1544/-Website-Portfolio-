@@ -1,4 +1,4 @@
-const Project = require("../models/Project");
+import Project from "../models/Project.js";
 
 // Get all projects
 const getProjects = async (req, res) => {
@@ -132,7 +132,7 @@ const deleteAllProjects = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getProjects,
   getProjectById,
   createProject,

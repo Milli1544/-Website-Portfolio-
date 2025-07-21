@@ -1,15 +1,25 @@
-const express = require('express');
-const {
-    signin,
-    signout,
-    signup
-} = require('../controllers/authController');
+import express from "express";
+import {
+  signup,
+  signin,
+  signout,
+  getCurrentUser,
+} from "../controllers/authController.js";
+import { requireSignin } from "../middleware/auth.middleware.js";
+import { checkDBConnection } from "../middleware/dbCheck.js";
 
 const router = express.Router();
 
-// Authentication routes
-router.post('/signup', signup);  // POST /api/auth/signup
-router.post('/signin', signin);  // POST /api/auth/signin
-router.post('/signout', signout); // POST /api/auth/signout
+// POST /api/auth/signup - Register new user
+router.post("/signup", checkDBConnection, signup);
 
-module.exports = router;
+// POST /api/auth/signin - Login user
+router.post("/signin", checkDBConnection, signin);
+
+// GET /api/auth/signout - Logout user
+router.get("/signout", signout);
+
+// GET /api/auth/me - Get current user (protected route)
+router.get("/me", requireSignin, getCurrentUser);
+
+export default router;

@@ -1,12 +1,12 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getQualifications,
   getQualificationById,
   createQualification,
   updateQualification,
   deleteQualification,
   deleteAllQualifications,
-} = require("../controllers/qualificationController");
+} from "../controllers/qualificationController.js";
 
 const router = express.Router();
 
@@ -24,4 +24,4 @@ router
   .put(updateQualification) // PUT /api/qualifications/:id - update qualification by id
   .delete(deleteQualification); // DELETE /api/qualifications/:id - remove qualification by id
 
-module.exports = router;
+export default router;

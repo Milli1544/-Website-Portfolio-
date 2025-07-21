@@ -4,12 +4,13 @@ const config = {
   jwtSecret: process.env.JWT_SECRET || "YOUR_secret_key",
   mongoUri:
     process.env.MONGODB_URI ||
-    "mongodb+srv://milikifleyesus:KGMYLxIYWcNkRN8I@portfolio.c4rjrao.mongodb.net/?retryWrites=true&w=majority&appName=Portfolio" ||
+    "mongodb+srv://milikifleyesus:AN8eUkNboexicwz7@test.ivz1lib.mongodb.net/" ||
     process.env.MONGO_HOST ||
     "mongodb://" +
       (process.env.IP || "localhost") +
       ":" +
       (process.env.MONGO_PORT || "27017") +
-      "/mernproject",
+      "/portfolio",
 };
-module.exports = config;
+
+export default config;

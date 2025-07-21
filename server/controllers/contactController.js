@@ -1,4 +1,4 @@
-const Contact = require("../models/Contact");
+import Contact from "../models/Contact.js";
 
 // Get all contacts
 const getContacts = async (req, res) => {
@@ -132,7 +132,7 @@ const deleteAllContacts = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getContacts,
   getContactById,
   createContact,

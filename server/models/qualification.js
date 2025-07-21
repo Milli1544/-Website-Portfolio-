@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const qualificationSchema = new mongoose.Schema(
   {
@@ -46,4 +46,4 @@ const qualificationSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Qualification", qualificationSchema);
+export default mongoose.model("Qualification", qualificationSchema);

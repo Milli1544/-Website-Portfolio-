@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Silk from "../components/Silk";
-import { Mail, MapPin, Linkedin, CheckCircle } from "lucide-react";
+import { Mail, MapPin, Linkedin, CheckCircle, User, MessageCircle } from "lucide-react";
 
 const glassStyle = {
   backdropFilter: "blur(16px)",
@@ -34,7 +34,8 @@ const ContactInfoCard = ({ icon: Icon, title, children }) => (
 const Contact = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "",
+    firstname: "",
+    lastname: "",
     email: "",
     message: "",
   });
@@ -44,8 +45,11 @@ const Contact = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+    if (!formData.firstname.trim()) {
+      newErrors.firstname = "First name is required";
+    }
+    if (!formData.lastname.trim()) {
+      newErrors.lastname = "Last name is required";
     }
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -54,6 +58,8 @@ const Contact = () => {
     }
     if (!formData.message.trim()) {
       newErrors.message = "Message is required";
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = "Message must be at least 10 characters";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -80,13 +86,40 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setShowSuccess(true);
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);
+      const response = await fetch("http://localhost:3000/api/contacts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setShowSuccess(true);
+        setFormData({ 
+          firstname: "", 
+          lastname: "", 
+          email: "",
+          message: "" 
+        });
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
+      } else {
+        // Handle validation errors from server
+        if (result.message) {
+          alert(result.message);
+        } else {
+          alert("Failed to send message. Please try again.");
+        }
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
+      alert("Network error. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -126,29 +159,65 @@ const Contact = () => {
               style={glassStyle}
             >
               <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium mb-2 text-indigo-200"
-                  >
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
-                      errors.name
-                        ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                        : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
-                    }`}
-                    placeholder="Your name"
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-400">{errors.name}</p>
-                  )}
+                {/* Name Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="firstname"
+                      className="block text-sm font-medium mb-2 text-indigo-200"
+                    >
+                      First Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        id="firstname"
+                        value={formData.firstname}
+                        onChange={handleChange}
+                        className={`w-full pl-12 pr-4 py-3 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
+                          errors.firstname
+                            ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
+                            : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
+                        }`}
+                        placeholder="Your first name"
+                      />
+                    </div>
+                    {errors.firstname && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {errors.firstname}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="lastname"
+                      className="block text-sm font-medium mb-2 text-indigo-200"
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      id="lastname"
+                      value={formData.lastname}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
+                        errors.lastname
+                          ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
+                          : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
+                      }`}
+                      placeholder="Your last name"
+                    />
+                    {errors.lastname && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {errors.lastname}
+                      </p>
+                    )}
+                  </div>
                 </div>
+
+                {/* Email Field */}
                 <div>
                   <label
                     htmlFor="email"
@@ -156,22 +225,27 @@ const Contact = () => {
                   >
                     Email
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
-                      errors.email
-                        ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                        : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
-                    }`}
-                    placeholder="your@email.com"
-                  />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5" />
+                    <input
+                      type="email"
+                      id="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={`w-full pl-12 pr-4 py-3 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
+                        errors.email
+                          ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
+                          : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
+                      }`}
+                      placeholder="your@email.com"
+                    />
+                  </div>
                   {errors.email && (
                     <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                   )}
                 </div>
+
+                {/* Message Field */}
                 <div>
                   <label
                     htmlFor="message"
@@ -179,24 +253,26 @@ const Contact = () => {
                   >
                     Message
                   </label>
-                  <textarea
-                    id="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={6}
-                    className={`w-full px-4 py-2 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
-                      errors.message
-                        ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                        : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
-                    }`}
-                    placeholder="Your message..."
-                  ></textarea>
+                  <div className="relative">
+                    <MessageCircle className="absolute left-3 top-3 text-indigo-400 w-5 h-5" />
+                    <textarea
+                      id="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows={4}
+                      className={`w-full pl-12 pr-4 py-3 rounded-lg bg-white/5 border transition-colors text-indigo-100 resize-none ${
+                        errors.message
+                          ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
+                          : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
+                      }`}
+                      placeholder="Tell me about your project or inquiry..."
+                    />
+                  </div>
                   {errors.message && (
-                    <p className="mt-1 text-sm text-red-400">
-                      {errors.message}
-                    </p>
+                    <p className="mt-1 text-sm text-red-400">{errors.message}</p>
                   )}
                 </div>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
