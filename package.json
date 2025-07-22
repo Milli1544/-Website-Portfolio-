@@ -1,10 +1,11 @@
 {
-  "name": "mern_skeleton",
+  "name": "mern_portfolio",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "author": "Blessing",
   "license": "MIT",
+  "description": "Full Stack Portfolio Application with MERN stack",
   "devDependencies": {
     "@babel/core": "^7.27.1",
     "@babel/preset-env": "^7.27.2",
@@ -15,12 +16,16 @@
   "scripts": {
     "start": "node server.js",
     "server": "nodemon server.js",
-    "client": "cd client && yarn dev",
+    "client": "cd client && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "cd client && yarn build",
-    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "cd client && yarn preview",
-    "create-admin": "node scripts/create-admin.js"
+    "build": "cd client && npm run build",
+    "build:server": "echo 'Server build not needed for development'",
+    "lint": "eslint server --ext js --report-unused-disable-directives --max-warnings 0",
+    "preview": "cd client && npm run preview",
+    "create-admin": "node scripts/create-admin.js",
+    "seed": "node scripts/seed-data.js",
+    "test": "echo 'No tests specified' && exit 0",
+    "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -34,5 +39,19 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.0"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "portfolio",
+    "mern",
+    "react",
+    "express",
+    "mongodb",
+    "nodejs",
+    "authentication",
+    "crud"
+  ]
 }

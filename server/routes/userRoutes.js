@@ -7,21 +7,21 @@ import {
   deleteUser,
   deleteAllUsers,
 } from "../controllers/userController.js";
+import { requireSignin, requireAdmin, hasAuthorization } from "../middleware/auth.middleware.js";
+import { checkDBConnection } from "../middleware/dbCheck.js";
 
 const router = express.Router();
 
-// Routes for /api/users
-router
-  .route("/")
-  .get(getUsers) // GET /api/users - get all users
-  .post(createUser) // POST /api/users - add new user
-  .delete(deleteAllUsers); // DELETE /api/users - remove all users
+// Admin only routes
+router.get("/", checkDBConnection, requireSignin, requireAdmin, getUsers);
+router.post("/", checkDBConnection, requireSignin, requireAdmin, createUser);
+router.delete("/", checkDBConnection, requireSignin, requireAdmin, deleteAllUsers);
 
-// Routes for /api/users/:id
-router
-  .route("/:id")
-  .get(getUserById) // GET /api/users/:id - get user by id
-  .put(updateUser) // PUT /api/users/:id - update user by id
-  .delete(deleteUser); // DELETE /api/users/:id - remove user by id
+// Protected routes - Users can view their own profile, admins can view any
+router.get("/:id", checkDBConnection, requireSignin, getUserById);
+
+// Admin or owner can update/delete
+router.put("/:id", checkDBConnection, requireSignin, hasAuthorization, updateUser);
+router.delete("/:id", checkDBConnection, requireSignin, requireAdmin, deleteUser);
 
 export default router;

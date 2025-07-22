@@ -7,21 +7,21 @@ import {
   deleteContact,
   deleteAllContacts,
 } from "../controllers/contactController.js";
-import { protect } from "../middleware/auth.js";
+import { requireSignin, requireAdmin } from "../middleware/auth.middleware.js";
+import { checkDBConnection } from "../middleware/dbCheck.js";
 
 const router = express.Router();
 
-// Routes - All protected with authentication
-router
-  .route("/")
-  .get(protect, getContacts)
-  .post(protect, createContact)
-  .delete(protect, deleteAllContacts);
+// Public routes
+router.post("/", checkDBConnection, createContact); // Anyone can create contact
 
-router
-  .route("/:id")
-  .get(protect, getContactById)
-  .put(protect, updateContact)
-  .delete(protect, deleteContact);
+// Protected routes - Users can view, only admins can modify
+router.get("/", checkDBConnection, requireSignin, getContacts);
+router.get("/:id", checkDBConnection, requireSignin, getContactById);
+
+// Admin only routes
+router.put("/:id", checkDBConnection, requireSignin, requireAdmin, updateContact);
+router.delete("/:id", checkDBConnection, requireSignin, requireAdmin, deleteContact);
+router.delete("/", checkDBConnection, requireSignin, requireAdmin, deleteAllContacts);
 
 export default router;

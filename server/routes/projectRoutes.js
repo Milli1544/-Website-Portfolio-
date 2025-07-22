@@ -7,20 +7,19 @@ import {
   deleteProject,
   deleteAllProjects,
 } from "../controllers/projectController.js";
+import { requireSignin, requireAdmin } from "../middleware/auth.middleware.js";
+import { checkDBConnection } from "../middleware/dbCheck.js";
 
 const router = express.Router();
 
-// Routes
-router
-  .route("/")
-  .get(getProjects)
-  .post(createProject)
-  .delete(deleteAllProjects);
+// Public routes - Anyone can view projects
+router.get("/", checkDBConnection, getProjects);
+router.get("/:id", checkDBConnection, getProjectById);
 
-router
-  .route("/:id")
-  .get(getProjectById)
-  .put(updateProject)
-  .delete(deleteProject);
+// Admin only routes
+router.post("/", checkDBConnection, requireSignin, requireAdmin, createProject);
+router.put("/:id", checkDBConnection, requireSignin, requireAdmin, updateProject);
+router.delete("/:id", checkDBConnection, requireSignin, requireAdmin, deleteProject);
+router.delete("/", checkDBConnection, requireSignin, requireAdmin, deleteAllProjects);
 
 export default router;
