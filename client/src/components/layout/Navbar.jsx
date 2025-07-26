@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Moon, Sun, Code, User, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * @param {Object} props
@@ -11,7 +12,7 @@ import { motion } from "framer-motion";
 const Navbar = ({ theme, toggleTheme }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState(null);
+  const { user, signout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -50,28 +51,20 @@ const Navbar = ({ theme, toggleTheme }) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      setUser(null);
-    }
-  }, [location]);
-
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await signout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if there's an error, navigate to home
+      navigate("/");
+    }
   };
 
   const getNavigationLinks = () => {
@@ -120,6 +113,19 @@ const Navbar = ({ theme, toggleTheme }) => {
 
           {/* Right Side Items */}
           <div className="flex items-center gap-4">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-dark-200 dark:hover:bg-dark-700 transition-colors"
+              title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            >
+              {theme === "light" ? (
+                <Moon size={20} className="text-dark-900" />
+              ) : (
+                <Sun size={20} className="text-white" />
+              )}
+            </button>
+
             {/* User Info / Auth Buttons */}
             {user ? (
               <div className="hidden md:flex items-center gap-4">
@@ -157,33 +163,15 @@ const Navbar = ({ theme, toggleTheme }) => {
               </div>
             )}
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
-              aria-label={
-                theme === "dark"
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-            >
-              {theme === "dark" ? (
-                <Sun size={20} className="text-yellow-400" />
-              ) : (
-                <Moon size={20} className="text-dark-500" />
-              )}
-            </button>
-
             {/* Mobile Menu Button */}
             <button
-              className="p-2 md:hidden rounded-lg hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
+              className="md:hidden p-2 rounded-full hover:bg-dark-200 dark:hover:bg-dark-700 transition-colors"
             >
               {isMenuOpen ? (
-                <X size={24} className="text-dark-800 dark:text-dark-200" />
+                <X size={20} className="text-dark-900 dark:text-white" />
               ) : (
-                <Menu size={24} className="text-dark-800 dark:text-dark-200" />
+                <Menu size={20} className="text-dark-900 dark:text-white" />
               )}
             </button>
           </div>
@@ -212,7 +200,7 @@ const Navbar = ({ theme, toggleTheme }) => {
               {name}
             </Link>
           ))}
-          
+
           {/* Mobile User Section */}
           <div className="mt-4 pt-4 border-t border-dark-200 dark:border-dark-700">
             {user ? (

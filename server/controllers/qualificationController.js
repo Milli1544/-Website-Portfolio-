@@ -1,6 +1,5 @@
 import Qualification from "../models/qualification.js";
 
-// Get all qualifications
 const getQualifications = async (req, res) => {
   try {
     const qualifications = await Qualification.find().sort({ createdAt: -1 });
@@ -18,7 +17,6 @@ const getQualifications = async (req, res) => {
   }
 };
 
-// Get qualification by ID
 const getQualificationById = async (req, res) => {
   try {
     const qualification = await Qualification.findById(req.params.id);
@@ -43,7 +41,6 @@ const getQualificationById = async (req, res) => {
   }
 };
 
-// Create new qualification
 const createQualification = async (req, res) => {
   try {
     const qualification = await Qualification.create(req.body);
@@ -61,7 +58,6 @@ const createQualification = async (req, res) => {
   }
 };
 
-// Update qualification by ID
 const updateQualification = async (req, res) => {
   try {
     const qualification = await Qualification.findByIdAndUpdate(
@@ -94,7 +90,6 @@ const updateQualification = async (req, res) => {
   }
 };
 
-// Delete qualification by ID
 const deleteQualification = async (req, res) => {
   try {
     const qualification = await Qualification.findByIdAndDelete(req.params.id);
@@ -119,7 +114,6 @@ const deleteQualification = async (req, res) => {
   }
 };
 
-// Delete all qualifications
 const deleteAllQualifications = async (req, res) => {
   try {
     const result = await Qualification.deleteMany({});

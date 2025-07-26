@@ -1,7 +1,6 @@
-import React from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import Silk from "../components/Silk";
 import GradientCard from "../components/GradientCard";
 import {
   ArrowRight,
@@ -21,7 +20,12 @@ import {
   SplitText,
 } from "../components/animations";
 
+// Lazy load the heavy Silk component with performance check
+const Silk = lazy(() => import("../components/Silk"));
+
 const Home = () => {
+  const [shouldLoadSilk, setShouldLoadSilk] = useState(false);
+
   const featuredProjectFeatures = [
     "HTML & Accessibility: Semantic structure, forms, links & media",
     "CSS3 Styling & Layout: Box Model, Flexbox, Grid, hover effects & transitions",
@@ -30,15 +34,40 @@ const Home = () => {
     "Interactive Features & Modularity: Image sliders, calculators, basic games, modular scripts & code reuse",
   ];
 
+  useEffect(() => {
+    // Check device performance and only load Silk on high-end devices
+    const checkPerformance = () => {
+      const isHighEndDevice =
+        navigator.hardwareConcurrency >= 8 &&
+        navigator.deviceMemory >= 8 &&
+        !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+
+      if (isHighEndDevice) {
+        // Delay loading to prioritize content
+        setTimeout(() => setShouldLoadSilk(true), 3000);
+      }
+    };
+
+    checkPerformance();
+  }, []);
+
   return (
     <div className="min-h-screen relative">
-      <Silk
-        speed={5}
-        scale={1}
-        color="#7B7481"
-        noiseIntensity={1.5}
-        rotation={0}
-      />
+      {/* Only load Silk on high-end devices after a delay */}
+      {shouldLoadSilk && (
+        <Suspense fallback={null}>
+          <Silk
+            speed={5}
+            scale={1}
+            color="#7B7481"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
+        </Suspense>
+      )}
+
       {/* Hero Section */}
       <section className="pt-32 pb-20 md:pt-36 md:pb-28">
         <div className="container-custom">
@@ -56,7 +85,7 @@ const Home = () => {
                 className="text-primary-500 dark:text-primary-400 inline-block"
               />
             </AnimatedText>
-/*
+
             <AnimatedText
               type="div"
               animation="fade-up"

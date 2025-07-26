@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "main": "server.js",
-  "author": "Blessing",
+  "author": "Milli",
   "license": "MIT",
-  "description": "Full Stack Portfolio Application with MERN stack",
+    "description": "Full Stack Portfolio Application with MERN stack",
   "devDependencies": {
     "@babel/core": "^7.27.1",
     "@babel/preset-env": "^7.27.2",

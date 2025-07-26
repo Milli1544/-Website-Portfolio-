@@ -40,10 +40,12 @@ export const AuthProvider = ({ children }) => {
         setUser(userData.user);
       } else {
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
       }
     } catch (error) {
       console.error("Auth check failed:", error);
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
     } finally {
       setLoading(false);
     }
@@ -52,6 +54,8 @@ export const AuthProvider = ({ children }) => {
   const signup = async (userData) => {
     try {
       setError(null);
+      console.log("Attempting signup with data:", userData);
+
       const response = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: {
@@ -60,16 +64,22 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
+      console.log("Signup response status:", response.status);
       const data = await response.json();
+      console.log("Signup response data:", data);
 
       if (!response.ok) {
         throw new Error(data.message || "Signup failed");
       }
 
-      localStorage.setItem("token", data.token);
-      setUser(data.user);
+      // The server returns data in a nested structure: { success: true, data: { user, token } }
+      localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
+      setUser(data.data.user);
+      console.log("Signup successful, user set:", data.data.user);
       return { success: true };
     } catch (error) {
+      console.error("Signup error:", error);
       setError(error.message);
       return { success: false, error: error.message };
     }
@@ -92,8 +102,9 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || "Signin failed");
       }
 
-      localStorage.setItem("token", data.token);
-      setUser(data.user);
+      localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
+      setUser(data.data.user);
       return { success: true };
     } catch (error) {
       setError(error.message);
@@ -105,17 +116,29 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        await fetch("http://localhost:5000/api/auth/signout", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Try to call the server signout endpoint
+        try {
+          await fetch("http://localhost:5000/api/auth/signout", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        } catch (networkError) {
+          console.warn(
+            "Server signout failed, but continuing with local cleanup:",
+            networkError
+          );
+          // Continue with local cleanup even if server call fails
+        }
       }
     } catch (error) {
       console.error("Signout error:", error);
+      // Continue with local cleanup even if there's an error
     } finally {
+      // Always clean up local storage and state
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
       setUser(null);
       setError(null);
     }

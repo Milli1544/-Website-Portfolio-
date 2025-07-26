@@ -4,11 +4,11 @@ import cookieParser from "cookie-parser";
 import compress from "compression";
 import cors from "cors";
 import helmet from "helmet";
-import contactRoutes from "./routes/contact.routes.js";
-import projectRoutes from "./routes/project.routes.js";
+import contactRoutes from "./routes/contactRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
 import educationRoutes from "./routes/education.routes.js";
-import userRoutes from "./routes/user.routes.js";
-import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/userRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
@@ -24,7 +24,11 @@ app.use(
     origin:
       process.env.NODE_ENV === "production"
         ? ["https://yourdomain.com"]
-        : ["http://localhost:5173", "http://localhost:3000"],
+        : [
+            "http://localhost:5173", // Vite dev server
+            "http://localhost:3000", // Compatibility
+            "http://localhost:4173"  // Vite preview
+          ],
     credentials: true,
   })
 );

@@ -9,7 +9,7 @@ import contactRoutes from "./routes/contactRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import educationRoutes from "./routes/education.routes.js";
 import userRoutes from "./routes/userRoutes.js";
-import authRoutes from "./routes/auth.routes.js";
+import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import { handleDBError } from "./middleware/dbCheck.js";
 import config from "../config/config.js";
@@ -27,7 +27,12 @@ app.use(
     origin:
       process.env.NODE_ENV === "production"
         ? ["https://yourdomain.com"]
-        : ["http://localhost:5173", "http://localhost:3000"],
+        : [
+            "http://localhost:5173", // Vite dev server
+            "http://localhost:5174", // Vite dev server (alternative port)
+            "http://localhost:3000", // Compatibility
+            "http://localhost:4173", // Vite preview
+          ],
     credentials: true,
   })
 );
@@ -52,10 +57,7 @@ const connectDB = async () => {
     });
 
     console.log("✅ Connected to MongoDB database: Portfolio");
-
-    // Create admin user if it doesn't exist
     await createDefaultAdmin();
-
     return true;
   } catch (err) {
     console.error("❌ MongoDB connection error:", err.message);

@@ -2,7 +2,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Silk from "../components/Silk";
-import { Mail, MapPin, Linkedin, CheckCircle, User, MessageCircle } from "lucide-react";
+import {
+  Mail,
+  MapPin,
+  Linkedin,
+  CheckCircle,
+  User,
+  MessageCircle,
+} from "lucide-react";
 
 const glassStyle = {
   backdropFilter: "blur(16px)",
@@ -86,7 +93,7 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/contacts", {
+      const response = await fetch("http://localhost:5000/api/contacts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,11 +105,11 @@ const Contact = () => {
 
       if (response.ok) {
         setShowSuccess(true);
-        setFormData({ 
-          firstname: "", 
-          lastname: "", 
+        setFormData({
+          firstname: "",
+          lastname: "",
           email: "",
-          message: "" 
+          message: "",
         });
         setTimeout(() => {
           navigate("/");
@@ -269,7 +276,9 @@ const Contact = () => {
                     />
                   </div>
                   {errors.message && (
-                    <p className="mt-1 text-sm text-red-400">{errors.message}</p>
+                    <p className="mt-1 text-sm text-red-400">
+                      {errors.message}
+                    </p>
                   )}
                 </div>
 

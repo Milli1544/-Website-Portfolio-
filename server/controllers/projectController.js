@@ -1,6 +1,5 @@
 import Project from "../models/Project.js";
 
-// Get all projects
 const getProjects = async (req, res) => {
   try {
     const projects = await Project.find().sort({ createdAt: -1 });
@@ -18,7 +17,6 @@ const getProjects = async (req, res) => {
   }
 };
 
-// Get project by ID
 const getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -43,7 +41,6 @@ const getProjectById = async (req, res) => {
   }
 };
 
-// Create new project
 const createProject = async (req, res) => {
   try {
     const project = await Project.create(req.body);
@@ -61,7 +58,6 @@ const createProject = async (req, res) => {
   }
 };
 
-// Update project by ID
 const updateProject = async (req, res) => {
   try {
     const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
@@ -90,7 +86,6 @@ const updateProject = async (req, res) => {
   }
 };
 
-// Delete project by ID
 const deleteProject = async (req, res) => {
   try {
     const project = await Project.findByIdAndDelete(req.params.id);
@@ -115,7 +110,6 @@ const deleteProject = async (req, res) => {
   }
 };
 
-// Delete all projects
 const deleteAllProjects = async (req, res) => {
   try {
     const result = await Project.deleteMany({});

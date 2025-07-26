@@ -24,6 +24,11 @@ const contactSchema = new mongoose.Schema(
         "Please enter a valid email",
       ],
     },
+    message: {
+      type: String,
+      trim: true,
+      maxlength: [1000, "Message cannot exceed 1000 characters"],
+    },
   },
   {
     timestamps: true,

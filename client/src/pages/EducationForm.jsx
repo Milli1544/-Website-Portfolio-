@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, User, Mail, Calendar, FileText, CheckCircle, AlertCircle, Trash2, Edit } from "lucide-react";
+import {
+  GraduationCap,
+  User,
+  Mail,
+  Calendar,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Trash2,
+  Edit,
+} from "lucide-react";
 import Silk from "../components/Silk";
 
 const glassStyle = {
@@ -33,7 +43,7 @@ const EducationForm = () => {
     // Check if user is logged in
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
-    
+
     if (!token || !userData) {
       navigate("/signin");
       return;
@@ -41,9 +51,9 @@ const EducationForm = () => {
 
     const parsedUser = JSON.parse(userData);
     setUser(parsedUser);
-    
+
     // Pre-fill user data
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       firstname: parsedUser.name.split(" ")[0] || "",
       lastname: parsedUser.name.split(" ").slice(1).join(" ") || "",
@@ -56,7 +66,7 @@ const EducationForm = () => {
 
   const fetchEducations = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/educations");
+      const response = await fetch("http://localhost:5000/api/educations");
       const result = await response.json();
       if (response.ok) {
         setEducations(result.data);
@@ -68,33 +78,33 @@ const EducationForm = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.title.trim()) {
       newErrors.title = "Education title is required";
     }
-    
+
     if (!formData.firstname.trim()) {
       newErrors.firstname = "First name is required";
     }
-    
+
     if (!formData.lastname.trim()) {
       newErrors.lastname = "Last name is required";
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email is invalid";
     }
-    
+
     if (!formData.completion.trim()) {
       newErrors.completion = "Completion date is required";
     }
-    
+
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -105,14 +115,14 @@ const EducationForm = () => {
       ...prev,
       [id]: value,
     }));
-    
+
     if (errors[id]) {
       setErrors((prev) => ({
         ...prev,
         [id]: undefined,
       }));
     }
-    
+
     if (serverError) {
       setServerError("");
     }
@@ -127,17 +137,17 @@ const EducationForm = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const url = editingId 
-        ? `http://localhost:3000/api/educations/${editingId}`
-        : "http://localhost:3000/api/educations";
-      
+      const url = editingId
+        ? `http://localhost:5000/api/educations/${editingId}`
+        : "http://localhost:5000/api/educations";
+
       const method = editingId ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -146,7 +156,7 @@ const EducationForm = () => {
 
       if (response.ok) {
         setShowSuccess(true);
-        
+
         setTimeout(() => {
           setFormData({
             title: "",
@@ -165,7 +175,9 @@ const EducationForm = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      setServerError("Network error. Please check your connection and try again.");
+      setServerError(
+        "Network error. Please check your connection and try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -177,25 +189,30 @@ const EducationForm = () => {
       firstname: education.firstname,
       lastname: education.lastname,
       email: education.email,
-      completion: education.completion.split('T')[0], // Format date for input
+      completion: education.completion.split("T")[0], // Format date for input
       description: education.description,
     });
     setEditingId(education._id);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this education record?")) {
+    if (
+      !window.confirm("Are you sure you want to delete this education record?")
+    ) {
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:3000/api/educations/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `http://localhost:5000/api/educations/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         fetchEducations();
@@ -233,7 +250,7 @@ const EducationForm = () => {
         noiseIntensity={1.5}
         rotation={0}
       />
-      
+
       <section className="pt-32 pb-20 md:pt-36 md:pb-28">
         <div className="container-custom">
           <motion.div
@@ -247,7 +264,9 @@ const EducationForm = () => {
                 {editingId ? "Edit Education" : "Add Education"}
               </h1>
               <p className="text-lg text-indigo-200">
-                {editingId ? "Update your education information" : "Add your educational qualifications"}
+                {editingId
+                  ? "Update your education information"
+                  : "Add your educational qualifications"}
               </p>
             </div>
 
@@ -260,7 +279,10 @@ const EducationForm = () => {
                 className="rounded-[32px] overflow-hidden relative p-8"
                 style={glassStyle}
               >
-                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-6 relative z-10"
+                >
                   {/* Title Field */}
                   <div>
                     <label
@@ -285,7 +307,9 @@ const EducationForm = () => {
                       />
                     </div>
                     {errors.title && (
-                      <p className="mt-1 text-sm text-red-400">{errors.title}</p>
+                      <p className="mt-1 text-sm text-red-400">
+                        {errors.title}
+                      </p>
                     )}
                   </div>
 
@@ -314,7 +338,9 @@ const EducationForm = () => {
                         />
                       </div>
                       {errors.firstname && (
-                        <p className="mt-1 text-sm text-red-400">{errors.firstname}</p>
+                        <p className="mt-1 text-sm text-red-400">
+                          {errors.firstname}
+                        </p>
                       )}
                     </div>
 
@@ -338,7 +364,9 @@ const EducationForm = () => {
                         placeholder="Last name"
                       />
                       {errors.lastname && (
-                        <p className="mt-1 text-sm text-red-400">{errors.lastname}</p>
+                        <p className="mt-1 text-sm text-red-400">
+                          {errors.lastname}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -367,7 +395,9 @@ const EducationForm = () => {
                       />
                     </div>
                     {errors.email && (
-                      <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+                      <p className="mt-1 text-sm text-red-400">
+                        {errors.email}
+                      </p>
                     )}
                   </div>
 
@@ -394,7 +424,9 @@ const EducationForm = () => {
                       />
                     </div>
                     {errors.completion && (
-                      <p className="mt-1 text-sm text-red-400">{errors.completion}</p>
+                      <p className="mt-1 text-sm text-red-400">
+                        {errors.completion}
+                      </p>
                     )}
                   </div>
 
@@ -422,7 +454,9 @@ const EducationForm = () => {
                       />
                     </div>
                     {errors.description && (
-                      <p className="mt-1 text-sm text-red-400">{errors.description}</p>
+                      <p className="mt-1 text-sm text-red-400">
+                        {errors.description}
+                      </p>
                     )}
                   </div>
 
@@ -478,7 +512,7 @@ const EducationForm = () => {
                         )}
                       </AnimatePresence>
                     </button>
-                    
+
                     {editingId && (
                       <button
                         type="button"
@@ -499,10 +533,15 @@ const EducationForm = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="space-y-4"
               >
-                <h3 className="text-xl font-semibold text-indigo-200 mb-4">Your Education Records</h3>
-                
+                <h3 className="text-xl font-semibold text-indigo-200 mb-4">
+                  Your Education Records
+                </h3>
+
                 {educations.length === 0 ? (
-                  <div className="rounded-[20px] p-6 text-center" style={glassStyle}>
+                  <div
+                    className="rounded-[20px] p-6 text-center"
+                    style={glassStyle}
+                  >
                     <GraduationCap className="mx-auto w-12 h-12 text-indigo-400 mb-3" />
                     <p className="text-indigo-200">No education records yet.</p>
                   </div>
@@ -538,7 +577,8 @@ const EducationForm = () => {
                         {education.firstname} {education.lastname}
                       </p>
                       <p className="text-indigo-300 text-sm mb-2">
-                        Completed: {new Date(education.completion).toLocaleDateString()}
+                        Completed:{" "}
+                        {new Date(education.completion).toLocaleDateString()}
                       </p>
                       <p className="text-indigo-200 text-sm">
                         {education.description}

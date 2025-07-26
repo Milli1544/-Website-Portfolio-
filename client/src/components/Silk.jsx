@@ -1,6 +1,13 @@
 /* eslint-disable react/no-unknown-property */
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { forwardRef, useRef, useMemo, useLayoutEffect, useEffect } from "react";
+import {
+  forwardRef,
+  useRef,
+  useMemo,
+  useLayoutEffect,
+  useEffect,
+  useState,
+} from "react";
 import { Color } from "three";
 
 const hexToNormalizedRGB = (hex) => {
@@ -80,7 +87,7 @@ const SilkPlane = forwardRef(function SilkPlane({ uniforms }, ref) {
 
   useFrame((_, delta) => {
     if (ref.current?.material?.uniforms?.uTime) {
-      ref.current.material.uniforms.uTime.value += delta * 0.5;
+      ref.current.material.uniforms.uTime.value += delta * 0.2; // Further reduced speed
     }
   });
 
@@ -110,6 +117,8 @@ const Silk = ({
 }) => {
   const meshRef = useRef();
   const canvasRef = useRef();
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(false);
 
   const uniforms = useMemo(
     () => ({
@@ -122,6 +131,33 @@ const Silk = ({
     }),
     [speed, scale, noiseIntensity, color, rotation]
   );
+
+  useEffect(() => {
+    // Check if device is capable of handling 3D content
+    const checkDeviceCapability = () => {
+      const isLowEndDevice =
+        navigator.hardwareConcurrency <= 4 ||
+        navigator.deviceMemory <= 4 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+
+      // Only load on high-end devices and after a longer delay
+      if (!isLowEndDevice) {
+        setTimeout(() => setShouldLoad(true), 2000); // Increased delay to 2s
+      }
+    };
+
+    checkDeviceCapability();
+  }, []);
+
+  useEffect(() => {
+    if (shouldLoad) {
+      // Additional delay before showing
+      const timer = setTimeout(() => setIsVisible(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldLoad]);
 
   useEffect(() => {
     // Reset animation time on mount
@@ -140,12 +176,16 @@ const Silk = ({
     };
   }, []);
 
+  if (!shouldLoad || !isVisible) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 -z-10 w-full h-full">
       <Canvas
         ref={canvasRef}
-        dpr={[1, 2]}
-        frameloop="always"
+        dpr={[1, 1]} // Further reduced DPR
+        frameloop="demand"
         style={{
           position: "fixed",
           top: 0,
@@ -156,12 +196,13 @@ const Silk = ({
         }}
         camera={{ position: [0, 0, 1], fov: 45 }}
         gl={{
-          antialias: true,
+          antialias: false,
           alpha: true,
           stencil: false,
           depth: false,
-          powerPreference: "high-performance",
+          powerPreference: "default",
         }}
+        performance={{ min: 0.3 }} // Lower performance threshold
       >
         <SilkPlane ref={meshRef} uniforms={uniforms} />
       </Canvas>

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { 
-  Users, 
-  Mail, 
-  GraduationCap, 
-  Folder, 
-  Trash2, 
+import {
+  Users,
+  Mail,
+  GraduationCap,
+  Folder,
+  Trash2,
   Eye,
   LogOut,
   Shield,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import Silk from "../components/Silk";
 
 const glassStyle = {
@@ -23,7 +24,7 @@ const glassStyle = {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, signout } = useAuth();
   const [stats, setStats] = useState({
     contacts: 0,
     projects: 0,
@@ -39,63 +40,56 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // Check if user is logged in and is admin
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    
-    if (!token || !userData) {
+    if (!user) {
       navigate("/signin");
       return;
     }
 
-    const parsedUser = JSON.parse(userData);
-    if (parsedUser.role !== "admin") {
+    if (user.role !== "admin") {
       navigate("/");
       return;
     }
 
-    setUser(parsedUser);
     fetchAllData();
-  }, [navigate]);
+  }, [user, navigate]);
 
   const fetchAllData = async () => {
-    setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      
-      // Fetch all data concurrently
-      const [contactsRes, projectsRes, educationsRes, usersRes] = await Promise.all([
-        fetch("http://localhost:3000/api/contacts", {
-          headers: { "Authorization": `Bearer ${token}` },
-        }),
-        fetch("http://localhost:3000/api/projects", {
-          headers: { "Authorization": `Bearer ${token}` },
-        }),
-        fetch("http://localhost:3000/api/educations", {
-          headers: { "Authorization": `Bearer ${token}` },
-        }),
-        fetch("http://localhost:3000/api/users", {
-          headers: { "Authorization": `Bearer ${token}` },
-        }),
-      ]);
+      const [contactsRes, projectsRes, educationsRes, usersRes] =
+        await Promise.all([
+          fetch("http://localhost:5000/api/contacts", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("http://localhost:5000/api/projects", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("http://localhost:5000/api/educations", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("http://localhost:5000/api/users", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-      const [contactsData, projectsData, educationsData, usersData] = await Promise.all([
-        contactsRes.json(),
-        projectsRes.json(),
-        educationsRes.json(),
-        usersRes.json(),
-      ]);
+      const [contactsData, projectsData, educationsData, usersData] =
+        await Promise.all([
+          contactsRes.json(),
+          projectsRes.json(),
+          educationsRes.json(),
+          usersRes.json(),
+        ]);
 
-      if (contactsData.success) setContacts(contactsData.data);
-      if (projectsData.success) setProjects(projectsData.data);
-      if (educationsData.success) setEducations(educationsData.data);
-      if (usersData.success) setUsers(usersData.data);
+      setContacts(contactsData.data || []);
+      setProjects(projectsData.data || []);
+      setEducations(educationsData.data || []);
+      setUsers(usersData.data || []);
 
-      // Update stats
       setStats({
-        contacts: contactsData.success ? contactsData.data.length : 0,
-        projects: projectsData.success ? projectsData.data.length : 0,
-        educations: educationsData.success ? educationsData.data.length : 0,
-        users: usersData.success ? usersData.data.length : 0,
+        contacts: contactsData.data?.length || 0,
+        projects: projectsData.data?.length || 0,
+        educations: educationsData.data?.length || 0,
+        users: usersData.data?.length || 0,
       });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -105,16 +99,12 @@ const AdminDashboard = () => {
   };
 
   const handleDelete = async (type, id) => {
-    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) {
-      return;
-    }
-
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:3000/api/${type}/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/${type}/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -129,10 +119,15 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/signin");
+  const handleLogout = async () => {
+    try {
+      await signout();
+      navigate("/signin");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if there's an error, navigate to signin
+      navigate("/signin");
+    }
   };
 
   if (!user || loading) {
@@ -162,60 +157,57 @@ const AdminDashboard = () => {
   );
 
   const DataTable = ({ data, type, columns }) => (
-    <div className="rounded-[20px] overflow-hidden" style={glassStyle}>
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-indigo-100 mb-4 capitalize">
-          {type} ({data.length})
-        </h3>
-        {data.length === 0 ? (
-          <p className="text-indigo-200 text-center py-8">No {type} found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-indigo-400/20">
-                  {columns.map((column) => (
-                    <th
-                      key={column.key}
-                      className="text-left py-3 px-2 text-indigo-200 font-medium"
-                    >
-                      {column.label}
-                    </th>
-                  ))}
-                  <th className="text-left py-3 px-2 text-indigo-200 font-medium">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="border-b border-indigo-400/10 hover:bg-indigo-400/5"
-                  >
-                    {columns.map((column) => (
-                      <td key={column.key} className="py-3 px-2 text-indigo-100">
-                        {column.render ? column.render(item) : item[column.key]}
-                      </td>
-                    ))}
-                    <td className="py-3 px-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleDelete(type, item._id)}
-                          className="p-1 text-red-400 hover:text-white hover:bg-red-400/10 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-[20px] p-6"
+      style={glassStyle}
+    >
+      <h3 className="text-xl font-semibold text-indigo-200 mb-4 capitalize">
+        {type} ({data.length})
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-indigo-400/20">
+              {columns.map((column) => (
+                <th
+                  key={column.key}
+                  className="py-3 px-4 text-indigo-300 font-medium"
+                >
+                  {column.label}
+                </th>
+              ))}
+              <th className="py-3 px-4 text-indigo-300 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item) => (
+              <tr key={item._id} className="border-b border-indigo-400/10">
+                {columns.map((column) => (
+                  <td key={column.key} className="py-3 px-4 text-indigo-200">
+                    {column.render
+                      ? column.render(item[column.key])
+                      : item[column.key]}
+                  </td>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                <td className="py-3 px-4">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDelete(type, item._id)}
+                      className="p-1 text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </div>
+    </motion.div>
   );
 
   return (
@@ -227,7 +219,7 @@ const AdminDashboard = () => {
         noiseIntensity={1.5}
         rotation={0}
       />
-      
+
       <section className="pt-32 pb-20 md:pt-36 md:pb-28">
         <div className="container-custom">
           {/* Header */}
@@ -260,215 +252,150 @@ const AdminDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Navigation Tabs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex flex-wrap gap-2 mb-8"
-          >
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard
+              icon={Mail}
+              title="Contacts"
+              value={stats.contacts}
+              color="text-blue-400"
+            />
+            <StatCard
+              icon={Folder}
+              title="Projects"
+              value={stats.projects}
+              color="text-green-400"
+            />
+            <StatCard
+              icon={GraduationCap}
+              title="Education"
+              value={stats.educations}
+              color="text-purple-400"
+            />
+            <StatCard
+              icon={Users}
+              title="Users"
+              value={stats.users}
+              color="text-orange-400"
+            />
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-4 mb-6">
             {[
-              { key: "overview", label: "Overview", icon: BarChart3 },
-              { key: "contacts", label: "Contacts", icon: Mail },
-              { key: "projects", label: "Projects", icon: Folder },
-              { key: "educations", label: "Education", icon: GraduationCap },
-              { key: "users", label: "Users", icon: Users },
+              { id: "overview", label: "Overview", icon: BarChart3 },
+              { id: "contacts", label: "Contacts", icon: Mail },
+              { id: "projects", label: "Projects", icon: Folder },
+              { id: "educations", label: "Education", icon: GraduationCap },
+              { id: "users", label: "Users", icon: Users },
             ].map((tab) => (
               <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors ${
-                  activeTab === tab.key
-                    ? "bg-indigo-400/20 border-indigo-400/40 text-indigo-200"
-                    : "border-indigo-400/20 text-indigo-300 hover:bg-indigo-400/10"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  activeTab === tab.id
+                    ? "bg-indigo-400/20 text-indigo-300 border border-indigo-400/30"
+                    : "text-indigo-200 hover:bg-indigo-400/10"
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
+                <tab.icon size={16} />
                 {tab.label}
               </button>
             ))}
-          </motion.div>
-
-          {/* Content */}
-          <div className="space-y-8">
-            {activeTab === "overview" && (
-              <>
-                {/* Stats Grid */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-                >
-                  <StatCard
-                    icon={Mail}
-                    title="Total Contacts"
-                    value={stats.contacts}
-                    color="text-blue-400"
-                  />
-                  <StatCard
-                    icon={Folder}
-                    title="Total Projects"
-                    value={stats.projects}
-                    color="text-green-400"
-                  />
-                  <StatCard
-                    icon={GraduationCap}
-                    title="Total Education"
-                    value={stats.educations}
-                    color="text-purple-400"
-                  />
-                  <StatCard
-                    icon={Users}
-                    title="Total Users"
-                    value={stats.users}
-                    color="text-orange-400"
-                  />
-                </motion.div>
-
-                {/* Recent Activity */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  className="rounded-[20px] p-6"
-                  style={glassStyle}
-                >
-                  <h3 className="text-xl font-semibold text-indigo-100 mb-4">
-                    Recent Activity
-                  </h3>
-                  <div className="space-y-3">
-                    {contacts.slice(0, 5).map((contact, index) => (
-                      <div
-                        key={contact._id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-indigo-400/5"
-                      >
-                        <Mail className="w-5 h-5 text-blue-400" />
-                        <div>
-                          <p className="text-indigo-100">
-                            New contact from {contact.firstname} {contact.lastname}
-                          </p>
-                          <p className="text-indigo-300 text-sm">{contact.email}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {contacts.length === 0 && (
-                      <p className="text-indigo-200 text-center py-4">
-                        No recent activity
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-              </>
-            )}
-
-            {activeTab === "contacts" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <DataTable
-                  data={contacts}
-                  type="contacts"
-                  columns={[
-                    { key: "firstname", label: "First Name" },
-                    { key: "lastname", label: "Last Name" },
-                    { key: "email", label: "Email" },
-                    {
-                      key: "message",
-                      label: "Message",
-                      render: (item) => (
-                        <span className="truncate max-w-xs block">
-                          {item.message}
-                        </span>
-                      ),
-                    },
-                    {
-                      key: "createdAt",
-                      label: "Date",
-                      render: (item) =>
-                        new Date(item.createdAt).toLocaleDateString(),
-                    },
-                  ]}
-                />
-              </motion.div>
-            )}
-
-            {activeTab === "projects" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <DataTable
-                  data={projects}
-                  type="projects"
-                  columns={[
-                    { key: "title", label: "Title" },
-                    { key: "firstname", label: "First Name" },
-                    { key: "lastname", label: "Last Name" },
-                    { key: "email", label: "Email" },
-                    {
-                      key: "completion",
-                      label: "Completion",
-                      render: (item) =>
-                        new Date(item.completion).toLocaleDateString(),
-                    },
-                  ]}
-                />
-              </motion.div>
-            )}
-
-            {activeTab === "educations" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <DataTable
-                  data={educations}
-                  type="educations"
-                  columns={[
-                    { key: "title", label: "Title" },
-                    { key: "firstname", label: "First Name" },
-                    { key: "lastname", label: "Last Name" },
-                    { key: "email", label: "Email" },
-                    {
-                      key: "completion",
-                      label: "Completion",
-                      render: (item) =>
-                        new Date(item.completion).toLocaleDateString(),
-                    },
-                  ]}
-                />
-              </motion.div>
-            )}
-
-            {activeTab === "users" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <DataTable
-                  data={users}
-                  type="users"
-                  columns={[
-                    { key: "name", label: "Name" },
-                    { key: "email", label: "Email" },
-                    { key: "role", label: "Role" },
-                    {
-                      key: "created",
-                      label: "Created",
-                      render: (item) =>
-                        new Date(item.created).toLocaleDateString(),
-                    },
-                  ]}
-                />
-              </motion.div>
-            )}
           </div>
+
+          {/* Tab Content */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              <DataTable
+                data={contacts.slice(0, 5)}
+                type="contacts"
+                columns={[
+                  { key: "name", label: "Name" },
+                  { key: "email", label: "Email" },
+                  {
+                    key: "message",
+                    label: "Message",
+                    render: (text) => text?.substring(0, 50) + "...",
+                  },
+                ]}
+              />
+              <DataTable
+                data={projects.slice(0, 5)}
+                type="projects"
+                columns={[
+                  { key: "title", label: "Title" },
+                  {
+                    key: "description",
+                    label: "Description",
+                    render: (text) => text?.substring(0, 50) + "...",
+                  },
+                  { key: "technologies", label: "Technologies" },
+                ]}
+              />
+            </div>
+          )}
+
+          {activeTab === "contacts" && (
+            <DataTable
+              data={contacts}
+              type="contacts"
+              columns={[
+                { key: "name", label: "Name" },
+                { key: "email", label: "Email" },
+                { key: "message", label: "Message" },
+                {
+                  key: "createdAt",
+                  label: "Date",
+                  render: (date) => new Date(date).toLocaleDateString(),
+                },
+              ]}
+            />
+          )}
+
+          {activeTab === "projects" && (
+            <DataTable
+              data={projects}
+              type="projects"
+              columns={[
+                { key: "title", label: "Title" },
+                { key: "description", label: "Description" },
+                { key: "technologies", label: "Technologies" },
+                { key: "githubUrl", label: "GitHub" },
+                { key: "liveUrl", label: "Live URL" },
+              ]}
+            />
+          )}
+
+          {activeTab === "educations" && (
+            <DataTable
+              data={educations}
+              type="educations"
+              columns={[
+                { key: "degree", label: "Degree" },
+                { key: "institution", label: "Institution" },
+                { key: "year", label: "Year" },
+                { key: "description", label: "Description" },
+              ]}
+            />
+          )}
+
+          {activeTab === "users" && (
+            <DataTable
+              data={users}
+              type="users"
+              columns={[
+                { key: "name", label: "Name" },
+                { key: "email", label: "Email" },
+                { key: "role", label: "Role" },
+                {
+                  key: "created",
+                  label: "Created",
+                  render: (date) => new Date(date).toLocaleDateString(),
+                },
+              ]}
+            />
+          )}
         </div>
       </section>
     </div>

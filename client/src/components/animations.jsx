@@ -1,5 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
+
+// Optimized animation variants
+const animationVariants = {
+  fade: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+  "fade-up": {
+    initial: { opacity: 0, y: 15 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+  "fade-down": {
+    initial: { opacity: 0, y: -15 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+};
 
 export const AnimatedText = ({
   type: Component = "div",
@@ -8,28 +27,21 @@ export const AnimatedText = ({
   children,
   className,
 }) => {
-  const animations = {
-    fade: {
-      initial: { opacity: 0 },
-      animate: { opacity: 1 },
-      transition: { duration: 0.6, delay },
-    },
-    "fade-up": {
-      initial: { opacity: 0, y: 20 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.6, delay },
-    },
-    "fade-down": {
-      initial: { opacity: 0, y: -20 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.6, delay },
-    },
+  const animationProps =
+    animationVariants[animation] || animationVariants["fade"];
+
+  // Add delay to transition
+  const transition = {
+    ...animationProps.transition,
+    delay: delay * 0.1, // Reduced delay multiplier
   };
 
-  const animationProps = animations[animation] || animations["fade"];
-
   return (
-    <motion.div {...animationProps} className={className}>
+    <motion.div
+      {...animationProps}
+      transition={transition}
+      className={className}
+    >
       <Component>{children}</Component>
     </motion.div>
   );
@@ -40,6 +52,12 @@ export const TypeWriter = ({ text, speed = 50, repeat = 1, className }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [iteration, setIteration] = useState(0);
 
+  const resetAnimation = useCallback(() => {
+    setDisplayText("");
+    setCurrentIndex(0);
+    setIteration((prev) => prev + 1);
+  }, []);
+
   useEffect(() => {
     if (currentIndex < text.length) {
       const timeout = setTimeout(() => {
@@ -48,14 +66,10 @@ export const TypeWriter = ({ text, speed = 50, repeat = 1, className }) => {
       }, speed);
       return () => clearTimeout(timeout);
     } else if (repeat === Infinity || iteration < repeat - 1) {
-      const timeout = setTimeout(() => {
-        setDisplayText("");
-        setCurrentIndex(0);
-        setIteration((prev) => prev + 1);
-      }, 1000);
+      const timeout = setTimeout(resetAnimation, 1000);
       return () => clearTimeout(timeout);
     }
-  }, [currentIndex, text, speed, repeat, iteration]);
+  }, [currentIndex, text, speed, repeat, iteration, resetAnimation]);
 
   return <span className={className}>{displayText}</span>;
 };
@@ -65,22 +79,12 @@ export const ScrollReveal = ({
   animation = "fade-up",
   className,
 }) => {
-  const animations = {
-    "fade-up": {
-      initial: { opacity: 0, y: 20 },
-      whileInView: { opacity: 1, y: 0 },
-      viewport: { once: true },
-      transition: { duration: 0.6 },
-    },
-    fade: {
-      initial: { opacity: 0 },
-      whileInView: { opacity: 1 },
-      viewport: { once: true },
-      transition: { duration: 0.6 },
-    },
+  const animationProps = {
+    initial: animationVariants[animation].initial,
+    whileInView: animationVariants[animation].animate,
+    viewport: { once: true, margin: "-50px" }, // Reduced margin for better performance
+    transition: { ...animationVariants[animation].transition, duration: 0.3 }, // Faster animation
   };
-
-  const animationProps = animations[animation] || animations["fade"];
 
   return (
     <motion.div {...animationProps} className={className}>
@@ -101,7 +105,7 @@ export const SplitText = ({
     hidden: {},
     visible: {
       transition: {
-        staggerChildren: 0.04,
+        staggerChildren: 0.02, // Reduced stagger for better performance
       },
     },
   };
@@ -109,11 +113,11 @@ export const SplitText = ({
   const charVariants = {
     hidden: {
       opacity: 0,
-      y: 20,
+      y: 10, // Reduced movement
       transition: {
         type: "spring",
-        damping: 12,
-        stiffness: 100,
+        damping: 15,
+        stiffness: 150,
       },
     },
     visible: {
@@ -121,8 +125,8 @@ export const SplitText = ({
       y: 0,
       transition: {
         type: "spring",
-        damping: 12,
-        stiffness: 100,
+        damping: 15,
+        stiffness: 150,
       },
     },
   };

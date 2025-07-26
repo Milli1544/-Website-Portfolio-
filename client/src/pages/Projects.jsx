@@ -1,8 +1,9 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Github, ExternalLink, ArrowRight } from "lucide-react";
-import Silk from "../components/Silk";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { ScrollReveal } from "../components/animations";
+
+// Lazy load the heavy Silk component
+const Silk = lazy(() => import("../components/Silk"));
 
 /**
  * @typedef {Object} Project
@@ -18,6 +19,8 @@ import { motion } from "framer-motion";
  */
 
 const Projects = () => {
+  const [shouldLoadSilk, setShouldLoadSilk] = useState(false);
+
   const projects = [
     {
       title: "C# Programming Journey",
@@ -58,15 +61,40 @@ const Projects = () => {
     },
   ];
 
+  useEffect(() => {
+    // Check device performance and only load Silk on high-end devices
+    const checkPerformance = () => {
+      const isHighEndDevice =
+        navigator.hardwareConcurrency >= 8 &&
+        navigator.deviceMemory >= 8 &&
+        !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+
+      if (isHighEndDevice) {
+        // Delay loading to prioritize content
+        setTimeout(() => setShouldLoadSilk(true), 2000);
+      }
+    };
+
+    checkPerformance();
+  }, []);
+
   return (
     <div className="min-h-screen relative">
-      <Silk
-        speed={5}
-        scale={1}
-        color="#7B7481"
-        noiseIntensity={1.5}
-        rotation={0}
-      />
+      {/* Only load Silk on high-end devices after a delay */}
+      {shouldLoadSilk && (
+        <Suspense fallback={null}>
+          <Silk
+            speed={5}
+            scale={1}
+            color="#7B7481"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
+        </Suspense>
+      )}
+
       <section className="pt-32 pb-20 md:pt-36 md:pb-28">
         <div className="container-custom">
           <motion.div
@@ -106,6 +134,9 @@ const Projects = () => {
                       src={project.image}
                       alt={project.title}
                       className="w-full h-full object-cover"
+                      width="600"
+                      height="400"
+                      loading="lazy"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.4 }}
                     />
@@ -119,18 +150,14 @@ const Projects = () => {
                     >
                       {project.title}
                     </motion.h2>
-                    <motion.div
-                      className="text-indigo-200 mb-6 whitespace-pre-wrap"
+                    <motion.p
+                      className="text-dark-600 dark:text-dark-300 mb-6 whitespace-pre-line"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6, delay: 0.3 }}
                     >
-                      {project.description.split("\n").map((paragraph, i) => (
-                        <p key={i} className={i > 0 ? "mt-4" : ""}>
-                          {paragraph}
-                        </p>
-                      ))}
-                    </motion.div>
+                      {project.description}
+                    </motion.p>
                     <motion.div
                       className="flex flex-wrap gap-2 mb-6"
                       initial={{ opacity: 0, y: 20 }}
@@ -140,14 +167,14 @@ const Projects = () => {
                       {project.tech.map((tech, techIndex) => (
                         <span
                           key={techIndex}
-                          className="px-3 py-1 bg-gradient-to-r from-indigo-400/10 to-violet-400/10 text-indigo-300 rounded-full text-sm border border-indigo-400/20"
+                          className="px-3 py-1 bg-primary-100/20 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-full text-sm font-medium"
                         >
                           {tech}
                         </span>
                       ))}
                     </motion.div>
                     <motion.div
-                      className="flex flex-wrap gap-4"
+                      className="flex gap-4"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6, delay: 0.5 }}
@@ -156,50 +183,24 @@ const Projects = () => {
                         href={project.links.github}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2 rounded-full bg-gradient-to-r from-indigo-400 to-violet-400 text-white flex items-center hover:opacity-90 transition-opacity"
+                        className="btn-primary"
                       >
-                        <Github size={18} className="mr-2" />
                         View Code
                       </a>
                       <a
                         href={project.links.live}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2 rounded-full border border-indigo-400/20 text-indigo-300 flex items-center hover:bg-indigo-400/10 transition-colors"
+                        className="btn-outline"
                       >
-                        <ExternalLink size={18} className="mr-2" />
                         Live Demo
                       </a>
                     </motion.div>
                   </div>
                 </div>
-
-                {/* Pure glass effect background */}
-                <div
-                  className="absolute inset-0 rounded-[32px]"
-                  style={{
-                    backdropFilter: "blur(16px)",
-                    WebkitBackdropFilter: "blur(16px)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}
-                />
               </motion.div>
             ))}
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-center mt-16"
-          >
-            <Link
-              to="/contact"
-              className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-400 to-violet-400 text-white inline-flex items-center hover:opacity-90 transition-opacity"
-            >
-              Let's Work Together <ArrowRight size={18} className="ml-2" />
-            </Link>
-          </motion.div>
         </div>
       </section>
     </div>

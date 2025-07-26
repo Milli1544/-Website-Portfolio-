@@ -123,6 +123,9 @@ const ProfileCard = ({
               src={avatarUrl || defaultAvatar}
               alt={name}
               className="avatar"
+              width="120"
+              height="120"
+              loading="eager"
               onError={(e) => {
                 e.target.src = defaultAvatar;
               }}
@@ -141,6 +144,9 @@ const ProfileCard = ({
                   <img
                     src={avatarUrl || defaultAvatar}
                     alt={name}
+                    width="32"
+                    height="32"
+                    loading="eager"
                     onError={(e) => {
                       e.target.src = defaultAvatar;
                     }}

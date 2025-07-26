@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Disallow admin and private routes
+Disallow: /admin/
+Disallow: /education/
+Disallow: /project-form/
+Disallow: /signin/
+Disallow: /signup/
+
+# Allow public pages
+Allow: /
+Allow: /about/
+Allow: /projects/
+Allow: /services/
+Allow: /contact/ 

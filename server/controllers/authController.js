@@ -11,10 +11,16 @@ const generateToken = (userId) => {
 // Sign up user
 export const signup = async (req, res) => {
   try {
+    console.log("Signup request received:", req.body);
     const { name, email, password } = req.body;
 
     // Validate required fields
     if (!name || !email || !password) {
+      console.log("Missing required fields:", {
+        name: !!name,
+        email: !!email,
+        password: !!password,
+      });
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -24,6 +30,7 @@ export const signup = async (req, res) => {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log("Invalid email format:", email);
       return res.status(400).json({
         success: false,
         message: "Please provide a valid email address",
@@ -33,6 +40,7 @@ export const signup = async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
+      console.log("User already exists:", email);
       return res.status(400).json({
         success: false,
         message: "User with this email already exists",
@@ -51,7 +59,9 @@ export const signup = async (req, res) => {
       role: "user", // Default role
     });
 
+    console.log("Saving user to database...");
     await user.save();
+    console.log("User saved successfully:", user._id);
 
     // Generate token
     const token = generateToken(user._id);
@@ -65,6 +75,7 @@ export const signup = async (req, res) => {
       created: user.created,
     };
 
+    console.log("Sending successful signup response");
     res.status(201).json({
       success: true,
       message: "User created successfully",

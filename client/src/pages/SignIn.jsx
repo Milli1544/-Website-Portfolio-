@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import Silk from "../components/Silk";
 
 const glassStyle = {
@@ -13,6 +14,7 @@ const glassStyle = {
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { signin } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -70,33 +72,22 @@ const SignIn = () => {
     setServerError("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await signin(formData);
 
-      const result = await response.json();
-
-      if (response.ok) {
-        // Store user data and token in localStorage
-        localStorage.setItem("token", result.data.token);
-        localStorage.setItem("user", JSON.stringify(result.data.user));
-        
+      if (result.success) {
         setShowSuccess(true);
         
         setTimeout(() => {
           // Redirect based on user role
-          if (result.data.user.role === "admin") {
+          const userData = JSON.parse(localStorage.getItem("user"));
+          if (userData?.role === "admin") {
             navigate("/admin/dashboard");
           } else {
             navigate("/");
           }
         }, 1500);
       } else {
-        setServerError(result.message || "Sign in failed. Please try again.");
+        setServerError(result.error || "Sign in failed. Please try again.");
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -107,7 +98,7 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative flex items-center justify-center">
       <Silk
         speed={5}
         scale={1}
@@ -116,156 +107,135 @@ const SignIn = () => {
         rotation={0}
       />
       
-      <section className="pt-32 pb-20 md:pt-36 md:pb-28">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-md mx-auto"
-          >
-            <div className="text-center mb-8">
-              <h1 className="mb-4 bg-gradient-to-r from-indigo-400 via-blue-400 to-violet-400 text-transparent bg-clip-text">
-                Sign In
-              </h1>
-              <p className="text-lg text-indigo-200">
-                Welcome back! Please sign in to your account.
-              </p>
+      <div className="relative z-10 w-full max-w-md mx-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="rounded-[20px] p-8"
+          style={glassStyle}
+        >
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+            <p className="text-indigo-200">
+              Sign in to your account to continue
+            </p>
+          </div>
+
+          {/* Success Message */}
+          <AnimatePresence>
+            {showSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-3"
+              >
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-green-400">Successfully signed in!</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Error Message */}
+          <AnimatePresence>
+            {serverError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3"
+              >
+                <AlertCircle className="w-5 h-5 text-red-400" />
+                <span className="text-red-400">{serverError}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-indigo-200 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-indigo-400" />
+                <input
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 bg-indigo-400/10 border rounded-lg text-white placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-colors ${
+                    errors.email ? "border-red-400" : "border-indigo-400/20"
+                  }`}
+                  placeholder="Enter your email"
+                />
+              </div>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+              )}
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="rounded-[32px] overflow-hidden relative p-8"
-              style={glassStyle}
+            {/* Password Field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-indigo-200 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-indigo-400" />
+                <input
+                  type="password"
+                  id="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 bg-indigo-400/10 border rounded-lg text-white placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-colors ${
+                    errors.password ? "border-red-400" : "border-indigo-400/20"
+                  }`}
+                  placeholder="Enter your password"
+                />
+              </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-400">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-400 to-violet-400 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-                {/* Email Field */}
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium mb-2 text-indigo-200"
-                  >
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5" />
-                    <input
-                      type="email"
-                      id="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className={`w-full pl-12 pr-4 py-3 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
-                        errors.email
-                          ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                          : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
-                      }`}
-                      placeholder="your@email.com"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-                  )}
-                </div>
+              {isSubmitting ? "Signing In..." : "Sign In"}
+            </button>
+          </form>
 
-                {/* Password Field */}
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium mb-2 text-indigo-200"
-                  >
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5" />
-                    <input
-                      type="password"
-                      id="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`w-full pl-12 pr-4 py-3 rounded-lg bg-white/5 border transition-colors text-indigo-100 ${
-                        errors.password
-                          ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                          : "border-indigo-400/20 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50"
-                      }`}
-                      placeholder="Enter your password"
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="mt-1 text-sm text-red-400">{errors.password}</p>
-                  )}
-                </div>
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-indigo-200">
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+              >
+                Sign up here
+              </Link>
+            </p>
+          </div>
 
-                {/* Server Error */}
-                {serverError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg"
-                  >
-                    <AlertCircle className="w-5 h-5 text-red-400" />
-                    <p className="text-sm text-red-400">{serverError}</p>
-                  </motion.div>
-                )}
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full px-6 py-3 rounded-full bg-gradient-to-r from-indigo-400 to-violet-400 text-white hover:opacity-90 transition-all duration-300 relative overflow-hidden disabled:opacity-70"
-                >
-                  <AnimatePresence mode="wait">
-                    {showSuccess ? (
-                      <motion.div
-                        key="success"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle className="w-5 h-5" />
-                        <span>Welcome Back!</span>
-                      </motion.div>
-                    ) : isSubmitting ? (
-                      <motion.div
-                        key="submitting"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                      >
-                        Signing In...
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="default"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                      >
-                        Sign In
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </button>
-
-                {/* Sign Up Link */}
-                <div className="text-center">
-                  <p className="text-indigo-200">
-                    Don't have an account?{" "}
-                    <Link
-                      to="/signup"
-                      className="text-indigo-400 hover:text-white transition-colors font-medium"
-                    >
-                      Sign up here
-                    </Link>
-                  </p>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 bg-indigo-400/5 border border-indigo-400/10 rounded-lg">
+            <p className="text-sm text-indigo-300 mb-2">Demo Admin Account:</p>
+            <p className="text-xs text-indigo-400">
+              Email: admin@portfolio.com
+            </p>
+            <p className="text-xs text-indigo-400">
+              Password: admin123
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };
